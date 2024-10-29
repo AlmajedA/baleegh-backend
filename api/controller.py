@@ -3,9 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from service.translation_service import query
 from fastapi.responses import JSONResponse
 import modal
+import math
+import logging
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 web_app = FastAPI()
 app = modal.App("baleegh")
+
+log_level = os.getenv("LOG_LEVEL", "ERROR").upper()
+logging.basicConfig(level=log_level)
 
 image = modal.Image.debian_slim().pip_install(
     "fastapi==0.115.2",
@@ -24,6 +33,13 @@ web_app.add_middleware(
 
 @web_app.get("/")
 def get_translation(text: str):
+    if not text or not isinstance(text, str):
+        return JSONResponse(content={"error": "Invalid input. Text must be a non-empty string."}, status_code=400)
+    
+    tokens = math.ceil(0.75 * len(text))
+    if tokens > 128:
+        return JSONResponse(content={"error": f"Input text exceeds the 128 token limit."}, status_code=400)
+    
     result = query(text)
     return JSONResponse(content={"translation": result})
 

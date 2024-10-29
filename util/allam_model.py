@@ -20,7 +20,7 @@ def get_ibm_access_token(api_key):
 
 class AllamModel:
     def __init__(self, model_id, project_id, url="https://eu-de.ml.cloud.ibm.com"):
-        api_key = os.getenv('IBM_API_KEY')
+        api_key = os.environ['IBM_API_KEY']
         if not api_key:
             raise ValueError("IBM_API_KEY environment variable not set")
 
@@ -40,5 +40,16 @@ class AllamModel:
             params=self.parameters,
             project_id=project_id
         )
+        self.system_prompt = "\n".join([
+            "أنت مختص في اللغة العربية، ودورك هو تصحيح الأخطاء الإملائية والنحوية في الجمل العربية التي تتلقاها.",
+            "يجب أن تقوم بالتغييرات الضرورية فقط، دون تغيير الكلمات أو المفردات إلا إذا كان ضروريًا للنحو.",
+            "أجب فقط بالجملة المصححة دون إضافة أي شرح للتعديلات أو الأخطاء.",
+            "مثال: إذا أعطيتك 'في نفس الوقت'، يجب أن ترد بـ'في الوقت نفسه' فقط، أو إذا أعطيتك 'لم أرى' ترد بـ'لم أرَ' فقط دون أي تعليق."
+        ])
+
     def generate_text(self, prompt):
+        prompt = self.construct_prompt(prompt)
         return self.model.generate_text(prompt)
+    
+    def construct_prompt(self, query):
+        return f"{self.system_prompt}\n\nالجملة المراد تصحيحها: {query}\nالجملة الصحيحة:"

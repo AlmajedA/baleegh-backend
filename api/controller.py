@@ -7,6 +7,7 @@ import math
 import logging
 import os
 from dotenv import load_dotenv
+from util import huggingface_model
 
 load_dotenv()
 
@@ -42,6 +43,10 @@ def get_translation(text: str):
     
     result = query(text)
     return JSONResponse(content={"translation": result})
+
+@web_app.get("/test")
+def test():
+    return huggingface_model.query("test")
 
 @app.function(image=image, secrets=[modal.Secret.from_name("env-variables")])
 @modal.asgi_app()

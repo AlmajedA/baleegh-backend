@@ -6,6 +6,9 @@ def get_image():
         "python-dotenv==1.0.1",
         "weave==0.51.17",
         "wandb==0.18.5",
-        "requests==2.32.2",
-        "openai"
+        "openai",
+        "huggingface",
+        "huggingface-hub",
+        "transformers",
+        "torch"
     )

@@ -9,40 +9,70 @@ import os
 from dotenv import load_dotenv
 from util.modal_image import get_image
 from util.chatgpt import chatgpt_translation
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, GenerationConfig
+from util.allam_model import AllamModel
 
 load_dotenv()
+MODEL_DIR = "BALEEGH"
+MINUTES = 60
+HOURS = 60 * MINUTES
 
-web_app = FastAPI()
-app = modal.App("baleegh")
+app = modal.App("baleegh", image=get_image(), secrets=[modal.Secret.from_name("env-variables")])
 
 log_level = os.getenv("LOG_LEVEL", "ERROR").upper()
 logging.basicConfig(level=log_level)
 
-web_app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Adjust this to specify allowed origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+@app.cls(container_idle_timeout=5 * MINUTES, timeout=24 * HOURS, cpu=3, keep_warm=3)
+class WebApp:
+    def __init__(self):
+        # Initialize FastAPI app
+        self.web_app = FastAPI()
+        
+        # Load any resources here (e.g., Hugging Face model)
+        # self.model = load_your_model()
+        
+        # Set up CORS
+        self.web_app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],  # Adjust as needed
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+        
+        self.web_app.add_api_route("/", self.query)
 
-@web_app.get("/")
-def get_translation(text: str):
-    if not text or not isinstance(text, str):
-        return JSONResponse(content={"error": "Invalid input. Text must be a non-empty string."}, status_code=400)
+    @modal.build()  # add another step to the image build
+    def download_model_to_folder(self):
+        from huggingface_hub import snapshot_download
+
+        os.makedirs(MODEL_DIR, exist_ok=True)
+        snapshot_download("Abdulmohsena/Faseeh", local_dir=MODEL_DIR)
     
-    tokens = math.ceil(0.75 * len(text))
-    if tokens > 128:
-        return JSONResponse(content={"error": f"Input text exceeds the 128 token limit."}, status_code=400)
+    @modal.enter()
+    def setup(self):
+        self.tokenizer = AutoTokenizer.from_pretrained("Abdulmohsena/Faseeh")
+        self.model = AutoModelForSeq2SeqLM.from_pretrained("Abdulmohsena/Faseeh")
+        self.generation_config = GenerationConfig.from_pretrained("Abdulmohsena/Faseeh")
+
+    def query(self, text: str):
+
+        encoded_ar = self.tokenizer(text, return_tensors="pt")
+        generated_tokens = self.model.generate(**encoded_ar, generation_config=self.generation_config)
+
+        model_response = self.tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
+        gpt_response = chatgpt_translation(text)
+
+        return self.allam(model_response, gpt_response)
     
-    result = query(text.lower())
-    return JSONResponse(content={"translation": result})
+    def allam(self, query1, query2):
+        model = AllamModel(
+            model_id=os.environ["IBM_MODEL_ID"], 
+            project_id=os.environ["IBM_PROJECT_ID"]
+        )
+        return model.generate_text(query1, query2)
+    
+    @modal.asgi_app()
+    def fastapi_app(self):
+        return self.web_app
 
-@web_app.get("/test")
-def test(text: str):
-    return chatgpt_translation(text)
-
-@app.function(image=get_image(), secrets=[modal.Secret.from_name("env-variables")], keep_warm=7)
-@modal.asgi_app()
-def fastapi_app():
-    return web_app

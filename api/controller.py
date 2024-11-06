@@ -7,7 +7,8 @@ import math
 import logging
 import os
 from dotenv import load_dotenv
-from util import huggingface_model
+from util.modal_image import get_image
+from util.chatgpt import chatgpt_translation
 
 load_dotenv()
 
@@ -16,13 +17,6 @@ app = modal.App("baleegh")
 
 log_level = os.getenv("LOG_LEVEL", "ERROR").upper()
 logging.basicConfig(level=log_level)
-
-image = modal.Image.debian_slim().pip_install(
-    "fastapi==0.115.2",
-    "ibm_watsonx_ai==1.1.15",  
-    "python-dotenv==1.0.1", 
-    "requests==2.32.2",       
-)
 
 web_app.add_middleware(
     CORSMiddleware,
@@ -41,14 +35,14 @@ def get_translation(text: str):
     if tokens > 128:
         return JSONResponse(content={"error": f"Input text exceeds the 128 token limit."}, status_code=400)
     
-    result = query(text)
+    result = query(text.lower())
     return JSONResponse(content={"translation": result})
 
 @web_app.get("/test")
-def test():
-    return huggingface_model.query("test")
+def test(text: str):
+    return chatgpt_translation(text)
 
-@app.function(image=image, secrets=[modal.Secret.from_name("env-variables")])
+@app.function(image=get_image(), secrets=[modal.Secret.from_name("env-variables")], keep_warm=7)
 @modal.asgi_app()
 def fastapi_app():
     return web_app

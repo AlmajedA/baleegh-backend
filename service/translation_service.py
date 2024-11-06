@@ -1,43 +1,42 @@
 import os
-import requests
 from dotenv import load_dotenv
 from util.allam_model import AllamModel
-import time
+# import weave
+# import wandb
+import requests
+from util.chatgpt import chatgpt_translation
 
 
 load_dotenv()
+
+# wandb.login(key=os.environ['WANDB_KEY'])
+# weave.init("Baleegh")
 
 MODEL_URL = os.environ['MODEL_URL']
 HEADERS = {
     "Authorization": f"Bearer {os.environ['HF_TOKEN']}",
 }
 
+# @weave.op
 def query(text):
-    # data = {
-    #     "inputs": text,
-    #     "parameters": {
-    #         "src_lang": "eng_Latn",
-    #         "tgt_lang": "arb_Arab"
-    #     }
-    # }
-    
-    # max_retries = 30
-    # retry_delay = 2  # seconds
+    data = {
+        "inputs": text,
+        "parameters": {
+            "src_lang": "eng_Latn",
+            "tgt_lang": "arb_Arab"
+        }
+    }
+        
+    response = requests.post(MODEL_URL, headers=HEADERS, json=data)
+    response_text = response.json()[0]['translation_text']
+            
+        
+    gpt_response = chatgpt_translation(text)
+    return allam(response_text, gpt_response)
 
-    # for attempt in range(max_retries):
-    #     response = requests.post(MODEL_URL, headers=HEADERS, json=data)
-    #     if response.status_code == 200:
-    #         response_text = response.json()[0]['translation_text']
-    #         return allam(response_text)
-    #     else:
-    #         time.sleep(retry_delay)
-    
-    # response.raise_for_status()
-    return None
-
-def allam(prompt):
+def allam(query1, query2):
     model = AllamModel(
         model_id=os.environ["IBM_MODEL_ID"], 
         project_id=os.environ["IBM_PROJECT_ID"]
     )
-    return model.generate_text(prompt)
+    return model.generate_text(query1, query2)

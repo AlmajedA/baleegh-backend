@@ -1,14 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from service.translation_service import query
 from fastapi.responses import JSONResponse
 import modal
-import math
 import logging
 import os
 from dotenv import load_dotenv
 from util.modal_image import get_image
-from util.chatgpt import chatgpt_translation
+# from util.chatgpt import chatgpt_translation
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, GenerationConfig
 from util.allam_model import AllamModel
 
@@ -22,7 +20,7 @@ app = modal.App("baleegh", image=get_image(), secrets=[modal.Secret.from_name("e
 log_level = os.getenv("LOG_LEVEL", "ERROR").upper()
 logging.basicConfig(level=log_level)
 
-@app.cls(container_idle_timeout=5 * MINUTES, timeout=24 * HOURS, cpu=3, keep_warm=3)
+@app.cls(container_idle_timeout=5 * MINUTES, timeout=24 * HOURS, cpu=1, keep_warm=1)
 class WebApp:
     def __init__(self):
         # Initialize FastAPI app
@@ -61,16 +59,16 @@ class WebApp:
         generated_tokens = self.model.generate(**encoded_ar, generation_config=self.generation_config)
 
         model_response = self.tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
-        gpt_response = chatgpt_translation(text)
+        # gpt_response = chatgpt_translation(text)
 
-        return self.allam(model_response, gpt_response)
+        return self.allam(model_response)
     
-    def allam(self, query1, query2):
+    def allam(self, query1):
         model = AllamModel(
             model_id=os.environ["IBM_MODEL_ID"], 
             project_id=os.environ["IBM_PROJECT_ID"]
         )
-        return model.generate_text(query1, query2)
+        return model.generate_text(query1)
     
     @modal.asgi_app()
     def fastapi_app(self):

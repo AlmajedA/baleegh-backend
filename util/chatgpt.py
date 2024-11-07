@@ -15,33 +15,38 @@ def chatgpt_translation(prompt):
             {
                 "role": "system", 
                 "content": (
-                    "You are a helpful assistant. Translate the following English sentences into classical Arabic sentences "
-                    "similar to Quran syntax. Only respond with the exact translation and nothing else."
-                    "Here are some examples of translations from English to classical Arabic:\n"
+                    "You are a professional translator, your task is to translate from English to Classic Arabic.\n"
                     "English: He felt lost in the crowd.\n"
-                    "Litral Translation: شعر بأنه تائه في الحشد.\n"
-                    "Classical Arabic Transltion: غاب في زحام الناس.\n"
+                    "Literal Translation: شعر بأنه تائه في الحشد.\n"
+                    "Classical Arabic Translation: غاب في زحام الناس.\n\n"
+                        
                     "English: He was troubled by the unexpected news.\n"
-                    "Litral Translation: كان منزعجًا من الخبر غير المتوقع.\n"
-                    "Classical Arabic Transltion: أثقلته المفاجأة.\n"
+                    "Literal Translation: كان منزعجًا من الخبر غير المتوقع.\n"
+                    "Classical Arabic Translation: أثقلته المفاجأة.\n\n"
+
                     "English: He lost hope completely.\n"
-                    "Litral Translation: فقد الأمل تمامًا.\n"
-                    "Classical Arabic Transltion: خاب أمله كل الخيبة.\n"
+                    "Literal Translation: فقد الأمل تمامًا.\n"
+                    "Classical Arabic Translation: خاب أمله كل الخيبة.\n\n"
+
                     "English: They turned a blind eye to his mistakes.\n"
-                    "Litral Translation: غضوا النظر عن أخطائه.\n"
-                    "Classical Arabic Transltion: تجاهلوا زلاته.\n"
+                    "Literal Translation: غضوا النظر عن أخطائه.\n"
+                    "Classical Arabic Translation: تجاهلوا زلاته.\n\n"
+
                     "English: He felt uncomfortable in their presence.\n"
-                    "Litral Translation: شعر بعدم الارتياح في وجودهم.\n"
-                    "Classical Arabic Transltion: ضاق بهم.\n"
+                    "Literal Translation: شعر بعدم الارتياح في وجودهم.\n"
+                    "Classical Arabic Translation: ضاق بهم.\n\n"
+
                     "English: They were quick to judge without understanding.\n"
-                    "Litral Translation: كانوا سريعين في الحكم دون فهم.\n"
-                    "Classical Arabic Transltion: تسرعوا في الحكم بلا دراية.\n"
+                    "Literal Translation: كانوا سريعين في الحكم دون فهم.\n"
+                    "Classical Arabic Translation: تسرعوا في الحكم بلا دراية.\n\n"
+
                     "English: He couldn’t sleep from worry.\n"
-                    "Litral Translation: لم يستطع النوم من القلق.\n"
-                    "Classical Arabic Transltion: أرقه القلق.\n"
-                    "These are examples of translations from english to true arabic and literal arabic. I want you to translate to the true arabic style.\n"
-                    
+                    "Literal Translation: لم يستطع النوم من القلق.\n"
+                    "Classical Arabic Translation: أرقه القلق.\n\n"
+
+                    "These are examples of translations from English to true Arabic and literal Arabic. I want you to translate to the true Arabic style.\n"
                 )
+
             },
             {
                 "role": "user", 

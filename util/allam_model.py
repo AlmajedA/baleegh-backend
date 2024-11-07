@@ -52,7 +52,7 @@ class AllamModel:
         ])
     
     def construct_prompt(self, query1):
-        prompt = f"{self.ystem_prompt}\n\nالجملة المراد تصحيحها: {query1}\nالجملة الصحيحة:"
+        prompt = f"{self.system_prompt}\n\nالجملة المراد تصحيحها: {query1}\nالجملة الصحيحة:"
         return prompt
     
     def generate_text(self, query1):

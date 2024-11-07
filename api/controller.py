@@ -20,7 +20,7 @@ app = modal.App("baleegh", image=get_image(), secrets=[modal.Secret.from_name("e
 log_level = os.getenv("LOG_LEVEL", "ERROR").upper()
 logging.basicConfig(level=log_level)
 
-@app.cls(container_idle_timeout=5 * MINUTES, timeout=24 * HOURS, cpu=1, keep_warm=1)
+@app.cls(container_idle_timeout=5 * MINUTES, timeout=24 * HOURS, cpu=1, keep_warm=3)
 class WebApp:
     def __init__(self):
         # Initialize FastAPI app

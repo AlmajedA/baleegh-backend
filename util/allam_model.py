@@ -47,10 +47,10 @@ class AllamModel:
             "مثال: إذا أعطيتك 'في نفس الوقت'، يجب أن ترد بـ'في الوقت نفسه' فقط، أو إذا أعطيتك 'لم أرى' ترد بـ'لم أرَ' فقط دون أي تعليق."
         ])
     
-    def construct_prompt(self, query1):
-        prompt = f"{self.system_prompt}\n\nالجملة المراد تصحيحها: {query1}\nالجملة الصحيحة:"
+    def construct_prompt(self, query):
+        prompt = f"{self.system_prompt}\n\nالجملة المراد تصحيحها: {query}\nالجملة الصحيحة:"
         return prompt
     
-    def generate_text(self, query1):
-        prompt = self.construct_prompt(query1)
+    def generate_text(self, query):
+        prompt = self.construct_prompt(query)
         return self.model.generate_text(prompt)

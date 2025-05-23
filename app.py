@@ -73,6 +73,7 @@ def fastapi_app():
     )
 
     @web_app.get("/")
+    @weave.op()
     def translate(text: str):
         inputs = tokenizer(text, return_tensors="pt")
         with torch.inference_mode():

@@ -13,13 +13,13 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, GenerationConfig
 
 load_dotenv()
 
-# 1) Define Stub and volume for HF weights
-stub = modal.Stub(
+# 1) Define App and volume for HF weights
+HF_CACHE_PATH = "/root/.cache/huggingface"
+app = modal.App(
     "baleegh",
     secrets=[modal.Secret.from_name("env-variables")],
+    volumes={HF_CACHE_PATH: modal.Volume.from_name("hf-cache-vol", create_if_missing=True)},
 )
-HF_CACHE_PATH = "/root/.cache/huggingface"
-hf_cache = modal.Volume().persist("hf-cache-vol")
 
 # 2) Build image
 image = (
@@ -38,41 +38,33 @@ image = (
 MINUTES = 60
 HOURS = 60 * MINUTES
 
-# 3) One “setup” function to download & load model & config
-@stub.function(
+# 3) Expose FastAPI app via Modal
+@app.function(
     image=image,
-    mounts={hf_cache: HF_CACHE_PATH},
     container_idle_timeout=5 * MINUTES,
-    keep_warm=3,
+    timeout=24 * HOURS,
+    keep_warm=1,
 )
-def setup_models():
+
+@modal.asgi_app(label="baleegh-webapp-fastapi-app")
+def fastapi_app():
+    # Preload model at container startup:
     os.makedirs(HF_CACHE_PATH, exist_ok=True)
     wandb.login(key=os.environ["WANDB_KEY"])
     weave.init("Baleegh")
+
     tokenizer = AutoTokenizer.from_pretrained(
         "Abdulmohsena/Faseeh", cache_dir=HF_CACHE_PATH
     )
     model = AutoModelForSeq2SeqLM.from_pretrained(
         "Abdulmohsena/Faseeh", cache_dir=HF_CACHE_PATH
     )
-    gen_cfg = GenerationConfig.from_pretrained(
+    generation_config = GenerationConfig.from_pretrained(
         "Abdulmohsena/Faseeh", cache_dir=HF_CACHE_PATH
     )
-    return tokenizer, model, gen_cfg
 
-tokenizer, model, generation_config = setup_models.call()
-
-# 4) Expose FastAPI app
-@stub.asgi_app(
-    image=image,
-    mounts={hf_cache: HF_CACHE_PATH},
-    container_idle_timeout=5 * MINUTES,
-    timeout=24 * HOURS,
-    keep_warm=3,
-)
-def fastapi_app():
-    app = FastAPI()
-    app.add_middleware(
+    web_app = FastAPI()
+    web_app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
         allow_credentials=True,
@@ -80,7 +72,7 @@ def fastapi_app():
         allow_headers=["*"],
     )
 
-    @app.get("/")
+    @web_app.get("/")
     def translate(text: str):
         inputs = tokenizer(text, return_tensors="pt")
         with torch.inference_mode():
@@ -89,8 +81,10 @@ def fastapi_app():
         output = re.sub(r"[A-Za-z:]", "", raw)
         return JSONResponse(content={"translation": output})
 
-    return app
-
+    return web_app
 
 if __name__ == "__main__":
-    stub.run()
+    from modal import enable_output
+
+    with enable_output():
+        app.run()

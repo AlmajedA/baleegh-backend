@@ -1,3 +1,5 @@
 **/.env
 __pycache__/
 .venv/
+modal_run.txt
+huggingface/
